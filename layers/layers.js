@@ -29,10 +29,40 @@ var lyr_exec_1 = new ol.layer.Vector({
 var format_25_day_2 = new ol.format.GeoJSON();
 var features_25_day_2 = format_25_day_2.readFeatures(json_25_day_2, 
             {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
-var jsonSource_25_day_2 = new ol.source.Vector({
-    attributions: ' ',
-});
-jsonSource_25_day_2.addFeatures(features_25_day_2);
+            var jsonSource_25_day_2 = new ol.source.Vector({
+                attributions: ' ',
+                url: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
+                format: new ol.format.GeoJSON(),
+                loader: function(extent, resolution, projection, success, failure) {
+                    let source = this;
+                    let url = this.getUrl();
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const features = source.getFormat().readFeatures(data, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            });
+                            source.addFeatures(features);
+                            if(success && typeof success === 'function'){
+                                success(features);
+                            }
+                            
+                        })
+                        .catch(error => {
+                            console.error('error loading', error);
+                            if(failure && typeof failure === 'function'){
+                                failure();
+                            }
+                        });
+                }
+            });
+
 var lyr_25_day_2 = new ol.layer.Vector({
                 declutter: false,
                 source:jsonSource_25_day_2, 
